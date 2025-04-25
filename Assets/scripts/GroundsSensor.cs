@@ -6,18 +6,20 @@ public class GroundsSensor : MonoBehaviour
 {
 
     public bool isGrounded;
+    public bool canDoubleJump = true;
 
     
-    void OntriggerEnter2D(Collider2D collider)
+    void OnTriggerEnter2D(Collider2D collider)
     {
         if (collider.gameObject.layer == 3)
         {
             isGrounded = true;
+            canDoubleJump = true;
         } 
     }
 
     
-    void OntriggeStay2D(Collider2D collider)
+    void OnTriggeStay2D(Collider2D collider)
     {
         if (collider.gameObject.layer == 3)
         {
