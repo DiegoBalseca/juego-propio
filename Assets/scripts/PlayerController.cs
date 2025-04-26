@@ -4,30 +4,29 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    private Rigidbody2D rigidbody2D;
+    private float inputHorizontal;
+    private float jumpForce = 4.5f;
+    private float playerSpeed = 5f;
+    public GroundsSensor groundSensor;
+    private Animator animator;
 
-private Rigidbody2D rigidbody2D;
-private float inputHorizontal;
-private float jumpForce = 4.5f;
-private float playerSpeed = 5f;
-public GroundsSensor groundSensor;
-private Animator animator;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private float dashForce = 20f;
+    [SerializeField] private float dashDuration = 0.5f;
+    [SerializeField] private float dashCoolDown = 1f;
+    private bool canDash = true;
+    private bool isDashing = false;
 
-[Serializefield ] private LayerMask enemyLayer;
-[Serializefield ] private float dashForce = 20; 
-[Serializefield ] private float dashDuration = 0.5f;
-[Serializefield ] private float dashCoolDown = 1;
-private bool cadDash = true;
-private bool isDashing = false;
+    [SerializeField] private float attackDamage = 10f;
+    [SerializeField] private float attackRadius = 1f;
+    [SerializeField] private Transform hitBoxPosition;
+    [SerializeField] private float baseChargedAttackDamage = 15f;
+    [SerializeField] private float maxChargedAttackDamage = 40f;
+    private float chargedAttackDamage;
 
-[Serializefield] private float attackDamage = 10;
-[Serializefield] private float attackRadius = 1;
-[Serializefield] private Transform hitBoxPosition;
-[Serializefield] private float basechargedAttackDamage = 15; 
-[Serializefield] private float maxcharged AttackDamage = 40;
-private float chargedAttackDamage;
+    private bool canShoot = true; 
 
-
-    
     void Awake()
     {
         rigidbody2D = GetComponent<Rigidbody2D>();
@@ -35,66 +34,54 @@ private float chargedAttackDamage;
         animator = GetComponent<Animator>();
     }
 
-    
     void Update()
     {
-
-          if(isDashing)
+        if (isDashing)
         {
             return;
         }
+
         inputHorizontal = Input.GetAxisRaw("Horizontal");
 
-        if(inputHorizontal > 0)
+        if (inputHorizontal > 0)
         {
             transform.rotation = Quaternion.Euler(0, 0, 0);
             animator.SetBool("IsRunning", true);
         }
-
-        else if(inputHorizontal < 0)
+        else if (inputHorizontal < 0)
         {
             transform.rotation = Quaternion.Euler(0, 180, 0);
             animator.SetBool("IsRunning", true);
         }
-
-        else 
+        else
         {
             animator.SetBool("IsRunning", false);
         }
 
-        if(Input.GetButtonDown("Jump") && groundSensor.isGrounded == true)
+        if (Input.GetButtonDown("Jump") && (groundSensor.isGrounded || groundSensor.canDoubleJump))
         {
-            if(groundSensor.isGrounded || groundSensor.canDoubleJump)
-            {
-                Jump();
-            } 
-          
-       
+            Jump();
         }
 
-         if (input.GetKeyDown(KeyCode.LeftShift)) //nuevo de hoy
+        if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             StartCoroutine(Dash());
         }
 
-        if (input.(GetButtonDown)("Fire2"))
+        if (Input.GetButtonDown("Fire2"))
         {
             AttackCharge();
         }
 
-        if(Input.GetBUttonUp("Fire2"))
+        if (Input.GetButtonUp("Fire2"))
         {
             AttackCharge();
         }
 
-        if(Input.GetButtonDown("Fire1") && canShoot)
+        if (Input.GetButtonDown("Fire1") && canShoot)
         {
-
+            NormalAttack();
         }
-
-
-
-            
 
         animator.SetBool("IsJumping", !groundSensor.isGrounded);
     }
@@ -102,94 +89,105 @@ private float chargedAttackDamage;
     void FixedUpdate()
     {
         rigidbody2D.velocity = new Vector2(playerSpeed * inputHorizontal, rigidbody2D.velocity.y);
-
     }
 
     void Jump()
-    
     {
-
-         if(!groundSensor.isGrounded)
-         {
+        if (!groundSensor.isGrounded)
+        {
             groundSensor.canDoubleJump = false;
             rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, 0);
-         }
-
+        }
 
         rigidbody2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
     }
 
-    IEnumuertor Dash() //nuevo de hoy
+    IEnumerator Dash()
     {
-
-        float gravity = rigidbody2D.gravityScale;
+        float originalGravity = rigidbody2D.gravityScale;
         rigidbody2D.gravityScale = 0;
-        rigidbody.velocity = new Vector2(rigidbody.velocity.x, 0);
+        rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, 0);
         isDashing = true;
         canDash = false;
-        rigidbody2D.AddForce(trasnform.right * dashForce, ForceMode2D.Impulse);
-        yield return new WaitForSeconds (dashDuration);
-        rigidbody2D.gravity = gravity;
+
+        rigidbody2D.AddForce(transform.right * dashForce, ForceMode2D.Impulse);
+
+        yield return new WaitForSeconds(dashDuration);
+
+        rigidbody2D.gravityScale = originalGravity;
         isDashing = false;
-        isDashing = false;
-        yield return new WaitForSeconds (dashCoolDown);
+
+        yield return new WaitForSeconds(dashCoolDown);
+
         canDash = true;
     }
 
-
-    public void TakeDamage (float damage;)
+    public void TakeDamage(float damage)
     {
-        currentHealth-= (int)damage;
-        healthBar.value = currentHealth;
-        
-        if(currentHealth <= 0)
+        int currentHealth = 100; 
+        UnityEngine.UI.Slider healthBar = null; 
+
+        currentHealth -= (int)damage;
+        if (healthBar != null)
+            healthBar.value = currentHealth;
+
+        if (currentHealth <= 0)
         {
             Death();
         }
     }
 
-    void NormalAttack()
+    void Death()
     {
-        Collider2D[] enemies = Physics2D.OverlapCircleAll(hitBoxPosition.position, attackRadius);
-        
-        foreach(Collider2D enemy in enemies)
-        {
-            Enemy enemyScript = enemy.GetComponent<Enemy>();
-            enemyScript.TakeDamage(attackDamage);
-        }
-
         
     }
 
-    void AttackDamage()
+    void NormalAttack()
     {
-        chargedAttackDamage += Time.deltaTime;
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(hitBoxPosition.position, attackRadius, enemyLayer);
+
+        foreach (Collider2D enemy in enemies)
+        {
+            Enemy enemyScript = enemy.GetComponent<Enemy>();
+            if (enemyScript != null)
+            {
+                enemyScript.TakeDamage(attackDamage);
+            }
+        }
     }
 
     void AttackCharge()
-     {
-
-        if(chargedAttackDamage < maxchargedAttackDamage)
-         chargedAttackDamage 
-         Collider2D[] enemies = Physics2D.OverlapCircleAll(hitBoxPosition.position, attackRadius);
-        
-        foreach(Collider2D enemy in enemies)
+    {
+        chargedAttackDamage += Time.deltaTime;
+        if (chargedAttackDamage < baseChargedAttackDamage)
         {
-            Enemy enemyScript = enemy.GetComponent<Enemy>();
-            enemyScript.TakeDamage(attackDamage);
+            chargedAttackDamage = baseChargedAttackDamage;
+        }
+        else if (chargedAttackDamage > maxChargedAttackDamage)
+        {
+            chargedAttackDamage = maxChargedAttackDamage;
         }
 
-        chargedAttackDamage = basechargedAttackDamage;
-     }
+        Collider2D[] enemies = Physics2D.OverlapCircleAll(hitBoxPosition.position, attackRadius, enemyLayer);
 
+        foreach (Collider2D enemy in enemies)
+        {
+            Enemy enemyScript = enemy.GetComponent<Enemy>();
+            if (enemyScript != null)
+            {
+                enemyScript.TakeDamage(chargedAttackDamage);
+            }
+        }
 
+        chargedAttackDamage = baseChargedAttackDamage;
+    }
 
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(hitBoxPosition.position, attackRadius);
+        if (hitBoxPosition != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(hitBoxPosition.position, attackRadius);
+        }
     }
-
-
-  
 }

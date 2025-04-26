@@ -16,7 +16,7 @@ public class CameraMovement : MonoBehaviour
     
     void Awake()
     {
-        playerTransform = gameObject.FindWithTag("Player").GetComponent<Transform>();
+        playerTransform = GameObject.FindWithTag("Player").GetComponent<Transform>();
     }
 
     
