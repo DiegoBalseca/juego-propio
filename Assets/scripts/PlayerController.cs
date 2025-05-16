@@ -58,6 +58,12 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("IsRunning", false);
         }
 
+        
+        if (Input.GetButtonDown("Jump"))
+        {
+            Debug.Log("Salto presionado");
+        }
+
         if (Input.GetButtonDown("Jump") && (groundSensor.isGrounded || groundSensor.canDoubleJump))
         {
             Jump();
@@ -140,6 +146,9 @@ public class PlayerController : MonoBehaviour
     void Death()
     {
         
+        Debug.Log("¡muerte!");
+        animator.SetTrigger("IsDeath");
+        
     }
 
     void NormalAttack()
@@ -188,6 +197,15 @@ public class PlayerController : MonoBehaviour
         {
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(hitBoxPosition.position, attackRadius);
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Trampa"))
+        {
+            Debug.Log("¡Tocó una trampa!");
+            Death();
         }
     }
 }
