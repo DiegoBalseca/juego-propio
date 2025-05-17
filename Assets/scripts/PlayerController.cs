@@ -25,7 +25,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxChargedAttackDamage = 40f;
     private float chargedAttackDamage;
 
-    private bool canShoot = true; 
+    private bool canShoot = true;
+    private bool isDead = false; // <--- NUEVO
 
     void Awake()
     {
@@ -36,7 +37,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDashing)
+        if (isDashing || isDead)
         {
             return;
         }
@@ -56,12 +57,6 @@ public class PlayerController : MonoBehaviour
         else
         {
             animator.SetBool("IsRunning", false);
-        }
-
-        
-        if (Input.GetButtonDown("Jump"))
-        {
-            Debug.Log("Salto presionado");
         }
 
         if (Input.GetButtonDown("Jump") && (groundSensor.isGrounded || groundSensor.canDoubleJump))
@@ -94,7 +89,10 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        rigidbody2D.velocity = new Vector2(playerSpeed * inputHorizontal, rigidbody2D.velocity.y);
+        if (!isDead && !isDashing)
+        {
+            rigidbody2D.velocity = new Vector2(playerSpeed * inputHorizontal, rigidbody2D.velocity.y);
+        }
     }
 
     void Jump()
@@ -130,8 +128,8 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
-        int currentHealth = 100; 
-        UnityEngine.UI.Slider healthBar = null; 
+        int currentHealth = 100;
+        UnityEngine.UI.Slider healthBar = null;
 
         currentHealth -= (int)damage;
         if (healthBar != null)
@@ -145,10 +143,21 @@ public class PlayerController : MonoBehaviour
 
     void Death()
     {
-        
+        if (isDead) return;
+
+        isDead = true;
         Debug.Log("¡muerte!");
         animator.SetTrigger("IsDeath");
-        
+
+        rigidbody2D.velocity = Vector2.zero;
+        this.enabled = false;
+    }
+
+    public void OnDeathAnimationEnd()
+    {
+        Debug.Log("Animación de muerte terminada. Destruyendo jugador...");
+        Destroy(gameObject);
+        // O usa gameObject.SetActive(false); si prefieres solo ocultarlo
     }
 
     void NormalAttack()
