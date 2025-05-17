@@ -19,9 +19,6 @@ public class PlayerSound : MonoBehaviour
     private bool alreadyPlaying = false;
 
     
-
-
-
     
     void Awake()
     {
