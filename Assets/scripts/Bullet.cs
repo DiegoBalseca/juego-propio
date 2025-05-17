@@ -4,16 +4,18 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 10f;
+    public float lifetime = 2f;
 
-    void Update()
+    void Start()
     {
-        transform.Translate(Vector2.right * speed * Time.deltaTime);
+        Destroy(gameObject, lifetime);
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        
-        Destroy(gameObject);
+        if (!other.CompareTag("Player"))
+        {
+            Destroy(gameObject);
+        }
     }
-} 
+}

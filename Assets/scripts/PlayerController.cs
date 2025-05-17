@@ -15,7 +15,6 @@ public class PlayerController : MonoBehaviour
     private bool isDead = false;
     private bool isDashing = false;
     private bool canDash = true;
-    private bool canShoot = true;
 
     [Header("Dash")]
     [SerializeField] private float dashForce = 20f;
@@ -55,7 +54,6 @@ public class PlayerController : MonoBehaviour
 
         inputHorizontal = Input.GetAxisRaw("Horizontal");
 
-        // Movimiento y rotación
         if (inputHorizontal > 0)
         {
             transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -71,22 +69,22 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("IsRunning", false);
         }
 
-        // Saltar
         if (Input.GetButtonDown("Jump") && (groundSensor.isGrounded || groundSensor.canDoubleJump))
         {
             Jump();
         }
 
-        // Dash
-        if (Input.GetKeyDown(KeyCode.LeftShift)) StartCoroutine(Dash());
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            StartCoroutine(Dash());
+        }
 
-        // Ataques
-        if (Input.GetButtonDown("Fire1") && canShoot) NormalAttack();
+        if (Input.GetButtonDown("Fire1")) NormalAttack();
         if (Input.GetButtonDown("Fire2")) AttackCharge();
         if (Input.GetButtonUp("Fire2")) AttackCharge();
 
-        // Disparo
-        if (Input.GetKeyDown(KeyCode.Space)) Shoot();
+        // 🔫 Disparo libre con la tecla E
+        if (Input.GetKeyDown(KeyCode.E)) Shoot();
 
         animator.SetBool("IsJumping", !groundSensor.isGrounded);
     }
@@ -106,6 +104,7 @@ public class PlayerController : MonoBehaviour
             groundSensor.canDoubleJump = false;
             rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, 0);
         }
+
         rigidbody2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
     }
 
@@ -151,7 +150,6 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("IsDeath");
         audioSource.PlayOneShot(deathSound);
 
-        // Detener música
         MusicaNivel musica = FindObjectOfType<MusicaNivel>();
         if (musica != null) musica.StopMusic();
 
@@ -233,4 +231,5 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
+
 

@@ -2,19 +2,13 @@ using UnityEngine;
 
 public class MusicaNivel : MonoBehaviour
 {
-    private AudioSource audioSource;
-
-    private void Awake()
+    void Start()
     {
-        DontDestroyOnLoad(gameObject); 
-        audioSource = GetComponent<AudioSource>();
+        GetComponent<AudioSource>().Play();
     }
 
-    public void DetenerMusica()
+    public void StopMusic()
     {
-        if (audioSource != null && audioSource.isPlaying)
-        {
-            audioSource.Stop();
-        }
+        GetComponent<AudioSource>().Stop();
     }
 }
