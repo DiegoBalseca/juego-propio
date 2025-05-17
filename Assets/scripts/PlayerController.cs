@@ -8,42 +8,54 @@ public class PlayerController : MonoBehaviour
     private float inputHorizontal;
     private float jumpForce = 4.5f;
     private float playerSpeed = 5f;
-    public GroundsSensor groundSensor;
     private Animator animator;
 
-    [SerializeField] private LayerMask enemyLayer;
+    [Header("Sensores y Control")]
+    public GroundsSensor groundSensor;
+    private bool isDead = false;
+    private bool isDashing = false;
+    private bool canDash = true;
+    private bool canShoot = true;
+
+    [Header("Dash")]
     [SerializeField] private float dashForce = 20f;
     [SerializeField] private float dashDuration = 0.5f;
     [SerializeField] private float dashCoolDown = 1f;
-    private bool canDash = true;
-    private bool isDashing = false;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip deathSound;
+    [SerializeField] private AudioClip shootSound;
+    private AudioSource audioSource;
+
+    [Header("Ataques")]
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackRadius = 1f;
     [SerializeField] private Transform hitBoxPosition;
     [SerializeField] private float baseChargedAttackDamage = 15f;
     [SerializeField] private float maxChargedAttackDamage = 40f;
     private float chargedAttackDamage;
+    [SerializeField] private LayerMask enemyLayer;
 
-    private bool canShoot = true;
-    private bool isDead = false; // <--- NUEVO
+    [Header("Disparo")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private float bulletSpeed = 10f;
 
     void Awake()
     {
         rigidbody2D = GetComponent<Rigidbody2D>();
-        groundSensor = GetComponentInChildren<GroundsSensor>();
         animator = GetComponent<Animator>();
+        groundSensor = GetComponentInChildren<GroundsSensor>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
     {
-        if (isDashing || isDead)
-        {
-            return;
-        }
+        if (isDashing || isDead) return;
 
         inputHorizontal = Input.GetAxisRaw("Horizontal");
 
+        // Movimiento y rotación
         if (inputHorizontal > 0)
         {
             transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -59,30 +71,22 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("IsRunning", false);
         }
 
+        // Saltar
         if (Input.GetButtonDown("Jump") && (groundSensor.isGrounded || groundSensor.canDoubleJump))
         {
             Jump();
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            StartCoroutine(Dash());
-        }
+        // Dash
+        if (Input.GetKeyDown(KeyCode.LeftShift)) StartCoroutine(Dash());
 
-        if (Input.GetButtonDown("Fire2"))
-        {
-            AttackCharge();
-        }
+        // Ataques
+        if (Input.GetButtonDown("Fire1") && canShoot) NormalAttack();
+        if (Input.GetButtonDown("Fire2")) AttackCharge();
+        if (Input.GetButtonUp("Fire2")) AttackCharge();
 
-        if (Input.GetButtonUp("Fire2"))
-        {
-            AttackCharge();
-        }
-
-        if (Input.GetButtonDown("Fire1") && canShoot)
-        {
-            NormalAttack();
-        }
+        // Disparo
+        if (Input.GetKeyDown(KeyCode.Space)) Shoot();
 
         animator.SetBool("IsJumping", !groundSensor.isGrounded);
     }
@@ -102,7 +106,6 @@ public class PlayerController : MonoBehaviour
             groundSensor.canDoubleJump = false;
             rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, 0);
         }
-
         rigidbody2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
     }
 
@@ -122,7 +125,6 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
 
         yield return new WaitForSeconds(dashCoolDown);
-
         canDash = true;
     }
 
@@ -146,8 +148,12 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
-        Debug.Log("¡muerte!");
         animator.SetTrigger("IsDeath");
+        audioSource.PlayOneShot(deathSound);
+
+        // Detener música
+        MusicaNivel musica = FindObjectOfType<MusicaNivel>();
+        if (musica != null) musica.StopMusic();
 
         rigidbody2D.velocity = Vector2.zero;
         this.enabled = false;
@@ -155,9 +161,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnDeathAnimationEnd()
     {
-        Debug.Log("Animación de muerte terminada. Destruyendo jugador...");
         Destroy(gameObject);
-        // O usa gameObject.SetActive(false); si prefieres solo ocultarlo
     }
 
     void NormalAttack()
@@ -177,14 +181,7 @@ public class PlayerController : MonoBehaviour
     void AttackCharge()
     {
         chargedAttackDamage += Time.deltaTime;
-        if (chargedAttackDamage < baseChargedAttackDamage)
-        {
-            chargedAttackDamage = baseChargedAttackDamage;
-        }
-        else if (chargedAttackDamage > maxChargedAttackDamage)
-        {
-            chargedAttackDamage = maxChargedAttackDamage;
-        }
+        chargedAttackDamage = Mathf.Clamp(chargedAttackDamage, baseChargedAttackDamage, maxChargedAttackDamage);
 
         Collider2D[] enemies = Physics2D.OverlapCircleAll(hitBoxPosition.position, attackRadius, enemyLayer);
 
@@ -200,6 +197,25 @@ public class PlayerController : MonoBehaviour
         chargedAttackDamage = baseChargedAttackDamage;
     }
 
+    void Shoot()
+    {
+        if (bulletPrefab != null && firePoint != null)
+        {
+            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+            Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                float direction = transform.rotation.y == 0 ? 1f : -1f;
+                rb.velocity = new Vector2(direction * bulletSpeed, 0f);
+            }
+
+            if (shootSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(shootSound);
+            }
+        }
+    }
+
     void OnDrawGizmos()
     {
         if (hitBoxPosition != null)
@@ -211,10 +227,10 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Trampa"))
+        if (other.CompareTag("Trampa") || other.CompareTag("Muerte"))
         {
-            Debug.Log("¡Tocó una trampa!");
             Death();
         }
     }
 }
+
