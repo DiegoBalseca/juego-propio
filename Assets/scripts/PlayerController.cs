@@ -83,7 +83,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Fire2")) AttackCharge();
         if (Input.GetButtonUp("Fire2")) AttackCharge();
 
-        // 🔫 Disparo libre con la tecla E
+        
         if (Input.GetKeyDown(KeyCode.E)) Shoot();
 
         animator.SetBool("IsJumping", !groundSensor.isGrounded);
