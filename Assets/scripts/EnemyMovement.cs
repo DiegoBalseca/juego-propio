@@ -32,4 +32,14 @@ public class EnemyMovement : MonoBehaviour
         localScale.x *= -1;
         transform.localScale = localScale;
     }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        
+        if (collision.gameObject.CompareTag("Obstaculo") || collision.gameObject.CompareTag("Enemy"))
+        {
+            direction *= -1;
+            Flip();
+        }
+    }
 }
