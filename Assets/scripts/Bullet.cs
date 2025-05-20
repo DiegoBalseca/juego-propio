@@ -10,4 +10,15 @@ public class Bullet : MonoBehaviour
     {
         Destroy(gameObject, lifeTime);
     }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        Enemy enemy = other.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.TakeDamage(10f);
+        }
+
+        Destroy(gameObject); 
+    }
 }
