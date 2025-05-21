@@ -4,21 +4,22 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float lifeTime = 2f;
+    public float damage = 10f;
 
-    void Start()
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        Destroy(gameObject, lifeTime);
-    }
+        
+        if (collision.CompareTag("Player"))
+            return;
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        Enemy enemy = other.GetComponent<Enemy>();
+        
+        var enemy = collision.GetComponent<Enemy>();
         if (enemy != null)
         {
-            enemy.TakeDamage(10f);
+            enemy.TakeDamage(damage);
         }
 
-        Destroy(gameObject); 
+        
+        Destroy(gameObject);
     }
 }
