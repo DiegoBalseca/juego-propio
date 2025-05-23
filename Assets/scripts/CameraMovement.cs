@@ -19,11 +19,7 @@
             }
         }
                 
-
-        
-
-
-        
+    
         void Awake()
         {
             playerTransform = GameObject.FindWithTag("Player").GetComponent<Transform>();

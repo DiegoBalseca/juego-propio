@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 public class PlayerShooting : MonoBehaviour
 {
     public GameObject bulletPrefab;
@@ -9,7 +10,7 @@ public class PlayerShooting : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E));
+        if (Input.GetKeyDown(KeyCode.E))
         {
             Shoot();
         }
@@ -17,8 +18,12 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Vector3 spawnPos = firePoint.position;
+        spawnPos.z = 0f; 
+
+        GameObject bullet = Instantiate(bulletPrefab, spawnPos, firePoint.rotation);
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
-        rb.velocity = firePoint.right * bulletForce;
+        rb.velocity = firePoint.right * bulletForce; 
     }
 }
+
